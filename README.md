@@ -6,7 +6,7 @@ Está hecho con [Gymnasium](https://gymnasium.farama.org/) y `MaskablePPO` de [s
 
 ![Ejemplo de horario generado](docs/ejemplo_horario.png)
 
-*Ejemplo con 8 trabajadores y un máximo de 5 almorzando a la vez. Izquierda: horario de cada trabajador. Centro: oferta contra demanda. Derecha: trabajadores almorzando en cada franja.*
+*Ejemplo con 8 trabajadores. Izquierda: horario de cada trabajador. Centro: oferta contra demanda. Derecha: trabajadores almorzando en cada franja.*
 
 ## Qué hace
 
@@ -131,7 +131,7 @@ from sb3_contrib.common.wrappers import ActionMasker
 from entorno import *
 
 DEMANDA = cargar_demanda("Datos/Demanda.csv")
-M, K = 8, 5                       # K = máximo de almuerzos simultáneos; None desactiva el tope
+M, K = 8, None                       # K = máximo de almuerzos simultáneos; None desactiva el tope
 print("K mínimo posible para", M, "trabajadores:", k_minimo(M))
 
 def make_env():
@@ -144,13 +144,13 @@ model = MaskablePPO("MultiInputPolicy", make_env(), verbose=1,
                     policy_kwargs=dict(net_arch=dict(pi=[256, 256], vf=[256, 256])))
 model.learn(total_timesteps=50_000 * M)     # unos 9 minutos con 8 trabajadores en 2 CPU
 os.makedirs("Pesos", exist_ok=True)
-model.save("Pesos/modelo_W8_K5")
+model.save("Pesos/modelo_W8_KNone")
 ```
 
 **3. Generar y validar un horario.**
 
 ```python
-model = MaskablePPO.load("Pesos/modelo_W8_K5")
+model = MaskablePPO.load("Pesos/modelo_W8_KNone")
 env = generar_horario(model, M, DEMANDA, max_almorzando=K)   # el mismo K del entrenamiento
 
 validar_multi(env.horarios, DEMANDA)         # reglas por trabajador y cobertura
